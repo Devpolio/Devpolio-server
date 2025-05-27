@@ -47,7 +47,6 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(tokenService.reissueAccessToken(request));
-
     }
 
 
