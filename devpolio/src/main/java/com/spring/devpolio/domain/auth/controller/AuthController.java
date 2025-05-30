@@ -39,15 +39,24 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshAccessTokenResponse> refreshToken(@RequestBody RefreshAccessTokenRequest request){
-        String refreshToken = request.getRefreshToken();
-
-        if(!tokenProvider.isValidToken(refreshToken) || !tokenProvider.isRefreshToken(refreshToken)){
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    public ResponseEntity<RefreshAccessTokenResponse> refreshToken(@RequestBody RefreshAccessTokenRequest request) {
+        try {
+            RefreshAccessTokenResponse response = tokenService.reissueAccessToken(request);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
         }
-
-        return ResponseEntity.ok(tokenService.reissueAccessToken(request));
     }
+    @PostMapping("/vaild")
+    public ResponseEntity<String> vaildToken(@RequestBody String token){
+        try {
+            String response = tokenService.validateToken(token);
+            return ResponseEntity.ok(response);
+        } catch(IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(null);
+        }
+    }
+
 
 
 

@@ -62,8 +62,20 @@ public class TokenService {
         }
 
         String newAccessToken = jwtTokenProvider.createAccessToken(user);
+        String newRefreshToken = jwtTokenProvider.createRefreshToken(user);
 
-        return new RefreshAccessTokenResponse(newAccessToken);
+        savedToken.setToken(newRefreshToken);
+        refreshTokenRepository.save(savedToken);
+
+        return new RefreshAccessTokenResponse(newAccessToken, newRefreshToken);
+    }
+
+    @Transactional
+    public String validateToken(String token) {
+        if (!jwtTokenProvider.isValidToken(token)) {
+            throw new IllegalArgumentException("Token Expired");
+        }
+        return "not expired";
     }
 
 }

@@ -24,4 +24,21 @@ public class SwaggerConfig {
                 )
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi PortfolioApi() {
+        return GroupedOpenApi.builder()
+                .group("portfolio")
+                .pathsToMatch("/portfolio")
+                .addOpenApiCustomizer(
+                        openApi ->
+                                openApi.setInfo(
+                                        new Info()
+                                                .title("portfolio api")
+                                                .description("포트폴리오 CRUD API")
+                                                .version("1.0.0")
+                                )
+                )
+                .build();
+    }
 }
