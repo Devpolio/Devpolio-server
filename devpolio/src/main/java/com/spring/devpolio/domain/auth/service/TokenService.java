@@ -11,6 +11,8 @@ import com.spring.devpolio.domain.user.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,19 +30,29 @@ public class TokenService {
     @Transactional
     public LoginResponse login(String email, String password) {
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new IllegalArgumentException("유저 없음"));
+                .orElseThrow(() -> new UsernameNotFoundException("유저 없음"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new IllegalArgumentException("비밀번호 틀림");
+            throw new BadCredentialsException("비밀번호 틀림");
         }
 
         String accessToken = jwtTokenProvider.createAccessToken(user);
         String refreshToken = jwtTokenProvider.createRefreshToken(user);
 
-        refreshTokenRepository.save(new RefreshToken(user.getId(), refreshToken));
+        // 기존 RefreshToken이 존재하는지 확인
+        RefreshToken existingToken = refreshTokenRepository.findById(user.getId())
+                .orElse(null);
+
+        if (existingToken != null) {
+            existingToken.setToken(refreshToken);
+            refreshTokenRepository.save(existingToken);
+        } else {
+            refreshTokenRepository.save(new RefreshToken(user.getId(), refreshToken));
+        }
 
         return new LoginResponse(accessToken, refreshToken);
     }
+
 
     @Transactional
     public RefreshAccessTokenResponse reissueAccessToken(RefreshAccessTokenRequest request) {
