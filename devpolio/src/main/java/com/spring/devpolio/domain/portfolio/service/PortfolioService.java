@@ -43,6 +43,7 @@
 
             Portfolio portfolio = new Portfolio();
             portfolio.setTitle(dto.getTitle());
+            portfolio.setAuthor(dto.getAuthor());
             portfolio.setPassword(dto.getPassword());
             portfolio.setCategory(dto.getCategory());
             portfolio.setIsPublic(dto.getIsPublic());

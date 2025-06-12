@@ -12,6 +12,7 @@ import java.util.List;
 @Setter
 public class addPortfolioDto {
     private String title;
+    private String author;
     private String password;
     private String category;
     private Boolean isPublic;

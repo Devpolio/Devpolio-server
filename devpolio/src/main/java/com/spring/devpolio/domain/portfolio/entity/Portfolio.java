@@ -22,6 +22,8 @@ public class Portfolio {
 
     private String title;
 
+    private String author;
+
     private LocalDateTime createdAt;
 
     private String password;
