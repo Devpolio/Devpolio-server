@@ -33,8 +33,10 @@ public class PortfolioController {
 
     @PostMapping(path = "/portfolio" ,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<addPortfolioResponseDto> addPortfolio(
-            @Parameter(description = "포트폴리오 정보(title, category, isPublic, password)") @ModelAttribute addPortfolioDto dto,
-            @Parameter(description = "배열<파일>") @RequestPart("files") List<MultipartFile> files,
+            @Parameter(description = "포트폴리오 정보(title, category, isPublic, password)")
+            @ModelAttribute addPortfolioDto dto,
+            @Parameter(description = "배열<파일>")
+            @RequestPart("files") List<MultipartFile> files,
             Principal user
     ) {
        return ResponseEntity.ok(portfolioService.addPortfolio(dto, files, user));
