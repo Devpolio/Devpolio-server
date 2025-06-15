@@ -17,10 +17,17 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder bCryptPasswordEncoder;
 
+    // UserService.java (수정된 코드)
     public UserAddResponse addUser(UserAddRequest request) {
-        String password = bCryptPasswordEncoder.encode(request.getPassword());
-        request.setPassword(password);
-        User savedUser = userRepository.save(request.toEntity());
+        // 1. 요청으로 받은 비밀번호를 직접 암호화합니다.
+        String encodedPassword = bCryptPasswordEncoder.encode(request.getPassword());
+
+        // 2. toEntity() 메소드를 호출할 때, 암호화된 비밀번호를 파라미터로 전달합니다.
+        User userToSave = request.toEntity(encodedPassword);
+
+        // 3. 엔티티를 저장합니다.
+        User savedUser = userRepository.save(userToSave);
+
         return new UserAddResponse(savedUser.getId(), savedUser.getEmail());
     }
 
