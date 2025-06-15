@@ -1,5 +1,6 @@
 package com.spring.devpolio.domain.user.service;
 
+import com.spring.devpolio.domain.admin.dto.UserInfoResponse;
 import com.spring.devpolio.domain.user.dto.UserAddRequest;
 import com.spring.devpolio.domain.user.dto.UserAddResponse;
 import com.spring.devpolio.domain.user.entity.User;
@@ -8,6 +9,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.security.Principal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 
 @RequiredArgsConstructor
@@ -29,6 +35,20 @@ public class UserService {
         User savedUser = userRepository.save(userToSave);
 
         return new UserAddResponse(savedUser.getId(), savedUser.getEmail());
+    }
+
+    public List<UserInfoResponse> getAllUsersInfo(){
+
+        return userRepository.findAll()
+                .stream()
+                .map(user -> new UserInfoResponse(
+                        user.getId(),
+                        user.getName(),
+                        user.getEmail(),
+                        user.getRoles()
+                        )
+                )
+                .collect(Collectors.toList());
     }
 
 }
