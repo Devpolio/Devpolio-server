@@ -6,30 +6,35 @@ import com.spring.devpolio.domain.user.repository.UserRepository;
 import com.spring.devpolio.domain.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/admin") // 클래스 레벨에 /admin 경로를 설정
+@RequestMapping("/admin/users") // 클래스 레벨에 /admin 경로를 설정
 public class AdminController {
 
     private final UserService userService;
 
-
-
-    @GetMapping("/users")
+    @GetMapping
     public ResponseEntity<List<UserInfoResponse>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsersInfo());
     }
 
-    // 이전에 논의했던 사용자 역할 변경 API
-    // PATCH /admin/users/{userId}/roles
-//    @PatchMapping("/users/{userId}/roles")
-//    public ResponseEntity<Void> updateUserRoles(...) {
-//        // ...
-//    }
+    @GetMapping("/id/{userId}")
+    public ResponseEntity<UserInfoResponse> getUserById(@PathVariable Long userId) {
+        UserInfoResponse user = userService.getUserInfoById(userId);
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<UserInfoResponse>> searchUsers(
+            @MatrixVariable(required = false) String name,
+            @MatrixVariable(required = false) String email
+    ) {
+        List<UserInfoResponse> users = userService.searchUsers(name, email);
+        return ResponseEntity.ok(users);
+    }
+
 }

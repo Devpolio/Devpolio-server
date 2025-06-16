@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -50,5 +51,25 @@ public class UserService {
                 )
                 .collect(Collectors.toList());
     }
+
+    public UserInfoResponse getUserInfoById(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
+
+        return new UserInfoResponse(user.getId(), user.getName(), user.getEmail(), user.getRoles());
+    }
+
+    public List<UserInfoResponse> searchUsers(String name, String email) {
+        // 둘 다 비어있으면 검색하지 않고 빈 리스트를 반환
+        if (name == null && email == null) {
+            return Collections.emptyList();
+        }
+
+        return userRepository.findByNameOrEmail(name, email)
+                .stream()
+                .map(user -> new UserInfoResponse(user.getId(), user.getName(), user.getEmail(), user.getRoles()))
+                .collect(Collectors.toList());
+    }
+
 
 }
