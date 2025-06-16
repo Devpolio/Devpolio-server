@@ -54,5 +54,21 @@ public class PortfolioController {
        return ResponseEntity.ok(portfolioService.addPortfolio(dto, files, user));
     }
 
+    @DeleteMapping("/files/{fileId}")
+    public ResponseEntity<String> deletePortfolioFile(
+            @PathVariable Long fileId,
+            Principal principal) {
+        portfolioService.deletePortfolioFile(fileId, principal);
+        return ResponseEntity.ok("파일이 성공적으로 삭제되었습니다.");
+    }
+
+    @DeleteMapping("portfolio/{id}")
+    public ResponseEntity<String> deletePortfolio(
+            @PathVariable Long id,
+            Principal principal) {
+        portfolioService.deletePortfolio(id, principal);
+        return ResponseEntity.ok("포트폴리오가 성공적으로 삭제되었습니다.");
+    }
+
 
 }

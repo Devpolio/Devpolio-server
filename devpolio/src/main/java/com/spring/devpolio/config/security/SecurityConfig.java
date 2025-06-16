@@ -1,4 +1,4 @@
-package com.spring.devpolio.config;
+package com.spring.devpolio.config.security;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
