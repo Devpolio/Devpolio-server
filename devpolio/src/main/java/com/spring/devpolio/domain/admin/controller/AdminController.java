@@ -33,6 +33,11 @@ public class AdminController {
             @MatrixVariable(required = false) String name,
             @MatrixVariable(required = false) String email
     ) {
+        // 최종 확인을 위한 로그
+        System.out.println("!!!!!!!!!! /admin/users/search 컨트롤러에 성공적으로 도달함 !!!!!!!!!!");
+        System.out.println("수신된 name: " + name);
+        System.out.println("수신된 email: " + email);
+
         List<UserInfoResponse> users = userService.searchUsers(name, email);
         return ResponseEntity.ok(users);
     }

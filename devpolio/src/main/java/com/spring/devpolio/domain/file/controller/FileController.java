@@ -1,5 +1,6 @@
 package com.spring.devpolio.domain.file.controller; // 패키지 경로는 프로젝트에 맞게 조정하세요.
 
+import com.spring.devpolio.domain.portfolio.service.PortfolioService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -16,15 +17,19 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Principal;
 
 @Slf4j
 @RestController
 @RequestMapping("/files") // "/api" 제거
 public class FileController {
 
+
+
     // application.properties 등에서 파일 저장 경로를 설정할 수 있습니다.
     @Value("${file.upload-dir}")
     private String uploadDirectory;
+
 
     /**
      * 이미지 미리보기(스트리밍)를 위한 API
@@ -77,4 +82,5 @@ public class FileController {
             return ResponseEntity.notFound().build();
         }
     }
+
 }

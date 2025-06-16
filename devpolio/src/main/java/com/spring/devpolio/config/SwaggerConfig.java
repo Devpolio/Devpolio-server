@@ -29,7 +29,7 @@ public class SwaggerConfig {
     public GroupedOpenApi PortfolioApi() {
         return GroupedOpenApi.builder()
                 .group("portfolio")
-                .pathsToMatch("/portfolio")
+                .pathsToMatch("/portfolio/**")
                 .addOpenApiCustomizer(
                         openApi ->
                                 openApi.setInfo(
@@ -41,4 +41,54 @@ public class SwaggerConfig {
                 )
                 .build();
     }
+
+    @Bean
+    public GroupedOpenApi adminApi() {
+        return GroupedOpenApi.builder()
+                .group("admin")
+                .pathsToMatch("/admin/**")
+                .addOpenApiCustomizer(
+                        openApi ->
+                                openApi.setInfo(
+                                        new Info()
+                                                .title("admin api")
+                                                .description("어드민만 접근 가능합니다")
+                                                .version("1.0.0")
+                                )
+                ).build();
+    }
+
+    @Bean
+    public GroupedOpenApi FileApi() {
+        return GroupedOpenApi.builder()
+                .group("file")
+                .pathsToMatch("/files/**")
+                .addOpenApiCustomizer(
+                openApi -> openApi.setInfo(
+                        new Info()
+                                .title("file api")
+                                .description("파일 처리, 다운로드 api")
+                                .version("1.0.0")
+                )
+        ).build();
+    }
+
+    @Bean
+    public GroupedOpenApi UserApi() {
+        return GroupedOpenApi.builder()
+                .group("user")
+                .pathsToMatch("/user/**")
+                .addOpenApiCustomizer(
+                        openApi ->
+                                openApi.setInfo(
+                                        new Info()
+                                                .title("user api")
+                                                .description("사용자 정보 확인용 api")
+                                                .version("1.0.0")
+                                )
+                )
+                .build();
+    }
+
+
 }
