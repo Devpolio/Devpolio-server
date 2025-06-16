@@ -1,10 +1,12 @@
 package com.spring.devpolio.domain.portfolio.controller;
 
 
+import com.spring.devpolio.domain.portfolio.dto.PortfolioDto;
 import com.spring.devpolio.domain.portfolio.dto.addPortfolioDto;
 import com.spring.devpolio.domain.portfolio.dto.addPortfolioResponseDto;
 import com.spring.devpolio.domain.portfolio.service.PortfolioService;
 import io.swagger.v3.oas.annotations.Parameter;
+import org.hibernate.query.Page;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.sound.sampled.Port;
+import java.awt.print.Pageable;
 import java.security.Principal;
 import java.util.List;
 
@@ -20,14 +24,16 @@ public class PortfolioController {
     @Autowired
     private PortfolioService portfolioService;
 
-//    @GetMapping("/portfolio")
-//    public ResponseEntity<T> portfolio() {
-//        return
-//    }
-//
+    @GetMapping("/portfolio")
+    public ResponseEntity<List<PortfolioDto>> getAllPortfolios(
+            @RequestParam(required = false) String category) {
+        List<PortfolioDto> portfolios = portfolioService.getAllPortfolios(category);
+        return ResponseEntity.ok(portfolios);
+    }
+
 //    @GetMapping("/portfolio/{id}")
 //    public ResponseEntity<T> portfolio(@PathVariable Long id) {
-//        return "portfolio";
+//
 //    }
 
 
