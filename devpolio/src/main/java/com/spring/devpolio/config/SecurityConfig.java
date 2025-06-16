@@ -2,6 +2,7 @@ package com.spring.devpolio.config;
 
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.spring.devpolio.config.filter.TokenAuthenticationFilter;
 import com.spring.devpolio.domain.auth.dto.TokenExceptionResponse;
 import com.spring.devpolio.domain.auth.service.JWTokenProvider;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,6 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 
@@ -48,6 +47,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.POST, "/auth/signup", "/auth/signin", "/auth/refresh", "/auth/vaild").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/portfolio/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/error").permitAll()

@@ -1,6 +1,7 @@
 package com.spring.devpolio.domain.portfolio.service;
 
 
+import com.spring.devpolio.domain.portfolio.dto.PortfolioDetailResponseDto;
 import com.spring.devpolio.domain.portfolio.dto.PortfolioDto;
 import com.spring.devpolio.domain.portfolio.dto.addPortfolioDto;
 import com.spring.devpolio.domain.portfolio.dto.addPortfolioResponseDto;
@@ -14,6 +15,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -52,6 +54,25 @@ public class PortfolioService {
         return portfolios.stream()
                 .map(PortfolioDto::new)
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public PortfolioDetailResponseDto getPortfolio(Long portfolioId, Principal principal) {
+        Portfolio portfolio = portfolioRepository.findByIdWithUserAndFiles(portfolioId)
+                .orElseThrow(() -> new RuntimeException("해당 포트폴리오를 찾을 수 없습니다. ID: " + portfolioId));
+        System.out.println("포트폴리오 찾는중");
+        if (!portfolio.getIsPublic()) {
+            if (principal == null) {
+                throw new RuntimeException("접근 권한이 없습니다. 로그인이 필요합니다.");
+            }
+            String requestUserEmail = principal.getName();
+            String ownerEmail = portfolio.getUser().getEmail();
+            if (!requestUserEmail.equals(ownerEmail)) {
+                throw new RuntimeException("비공개 포트폴리오에 대한 접근 권한이 없습니다.");
+            }
+        }
+        System.out.println("포트폴리오 찾기 성공");
+        return new PortfolioDetailResponseDto(portfolio);
     }
 
     public addPortfolioResponseDto addPortfolio(addPortfolioDto dto, List<MultipartFile> files, Principal principal) {

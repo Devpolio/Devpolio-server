@@ -1,4 +1,4 @@
-package com.spring.devpolio.config;
+package com.spring.devpolio.config.filter;
 
 import com.spring.devpolio.domain.auth.service.JWTokenProvider;
 import jakarta.servlet.FilterChain;

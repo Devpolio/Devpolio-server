@@ -1,6 +1,7 @@
 package com.spring.devpolio.domain.portfolio.controller;
 
 
+import com.spring.devpolio.domain.portfolio.dto.PortfolioDetailResponseDto;
 import com.spring.devpolio.domain.portfolio.dto.PortfolioDto;
 import com.spring.devpolio.domain.portfolio.dto.addPortfolioDto;
 import com.spring.devpolio.domain.portfolio.dto.addPortfolioResponseDto;
@@ -31,10 +32,15 @@ public class PortfolioController {
         return ResponseEntity.ok(portfolios);
     }
 
-//    @GetMapping("/portfolio/{id}")
-//    public ResponseEntity<T> portfolio(@PathVariable Long id) {
-//
-//    }
+    @GetMapping("/portfolio/{id}")
+    public ResponseEntity<PortfolioDetailResponseDto> getPortfolio(
+            @PathVariable Long id,
+            Principal principal) {
+        PortfolioDetailResponseDto portfolioDto =
+                portfolioService.getPortfolio(id, principal);
+        System.out.println(portfolioDto);
+        return ResponseEntity.ok(portfolioDto);
+    }
 
 
     @PostMapping(path = "/portfolio" ,consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
