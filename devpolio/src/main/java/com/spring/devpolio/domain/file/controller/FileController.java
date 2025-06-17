@@ -1,6 +1,7 @@
 package com.spring.devpolio.domain.file.controller; // 패키지 경로는 프로젝트에 맞게 조정하세요.
 
 import com.spring.devpolio.domain.portfolio.service.PortfolioService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -22,9 +23,11 @@ import java.security.Principal;
 @Slf4j
 @RestController
 @RequestMapping("/files") // "/api" 제거
+@RequiredArgsConstructor
 public class FileController {
 
 
+    private final PortfolioService portfolioService;
 
     // application.properties 등에서 파일 저장 경로를 설정할 수 있습니다.
     @Value("${file.upload-dir}")
@@ -81,6 +84,14 @@ public class FileController {
         } else {
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @DeleteMapping("/{fileId}")
+    public ResponseEntity<String> deletePortfolioFile(
+            @PathVariable Long fileId,
+            Principal principal) {
+        portfolioService.deletePortfolioFile(fileId, principal);
+        return ResponseEntity.ok("파일이 성공적으로 삭제되었습니다.");
     }
 
 }

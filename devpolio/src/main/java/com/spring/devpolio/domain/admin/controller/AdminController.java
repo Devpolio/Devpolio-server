@@ -1,8 +1,6 @@
 package com.spring.devpolio.domain.admin.controller;
 
-import com.spring.devpolio.domain.admin.dto.UserInfoResponse;
-import com.spring.devpolio.domain.user.entity.User;
-import com.spring.devpolio.domain.user.repository.UserRepository;
+import com.spring.devpolio.domain.admin.dto.UserInfoDetailResponse;
 import com.spring.devpolio.domain.user.service.UserService;
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +17,7 @@ public class AdminController {
     private final UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<UserInfoResponse>> getAllUsers(
+    public ResponseEntity<List<UserInfoDetailResponse>> getAllUsers(
             @Parameter(description = "전체 사용자 목록 조회")
             @MatrixVariable(required = false) String e
     ) {
@@ -27,16 +25,16 @@ public class AdminController {
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<UserInfoResponse> getUserById(
+    public ResponseEntity<UserInfoDetailResponse> getUserById(
             @Parameter(description = "id로 특정 사용자 조회")
             @PathVariable Long userId
     ) {
-        UserInfoResponse user = userService.getUserInfoById(userId);
+        UserInfoDetailResponse user = userService.getUserInfoById(userId);
         return ResponseEntity.ok(user);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<UserInfoResponse>> searchUsers(
+    public ResponseEntity<List<UserInfoDetailResponse>> searchUsers(
             @Parameter(description = "이메일 또는 사용자 이름으로 사용자 조회")
             @MatrixVariable(required = false) String name,
             @MatrixVariable(required = false) String email
@@ -46,7 +44,7 @@ public class AdminController {
         System.out.println("수신된 name: " + name);
         System.out.println("수신된 email: " + email);
 
-        List<UserInfoResponse> users = userService.searchUsers(name, email);
+        List<UserInfoDetailResponse> users = userService.searchUsers(name, email);
         return ResponseEntity.ok(users);
     }
 

@@ -1,17 +1,16 @@
 package com.spring.devpolio.domain.user.service;
 
-import com.spring.devpolio.domain.admin.dto.UserInfoResponse;
+import com.spring.devpolio.domain.admin.dto.UserInfoDetailResponse;
 import com.spring.devpolio.domain.user.dto.UserAddRequest;
 import com.spring.devpolio.domain.user.dto.UserAddResponse;
+import com.spring.devpolio.domain.user.dto.UserInfoResponse;
 import com.spring.devpolio.domain.user.entity.User;
 import com.spring.devpolio.domain.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.security.Principal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -38,11 +37,11 @@ public class UserService {
         return new UserAddResponse(savedUser.getId(), savedUser.getEmail());
     }
 
-    public List<UserInfoResponse> getAllUsersInfo(){
+    public List<UserInfoDetailResponse> getAllUsersInfo(){
 
         return userRepository.findAll()
                 .stream()
-                .map(user -> new UserInfoResponse(
+                .map(user -> new UserInfoDetailResponse(
                         user.getId(),
                         user.getName(),
                         user.getEmail(),
@@ -52,23 +51,44 @@ public class UserService {
                 .collect(Collectors.toList());
     }
 
-    public UserInfoResponse getUserInfoById(Long userId) {
+    public UserInfoDetailResponse getUserInfoById(Long userId) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다. id=" + userId));
 
-        return new UserInfoResponse(user.getId(), user.getName(), user.getEmail(), user.getRoles());
+        return new UserInfoDetailResponse(user.getId(), user.getName(), user.getEmail(), user.getRoles());
     }
 
-    public List<UserInfoResponse> searchUsers(String name, String email) {
-        // 둘 다 비어있으면 검색하지 않고 빈 리스트를 반환
+    public List<UserInfoDetailResponse> searchUsers(String name, String email) {
+
         if (name == null && email == null) {
             return Collections.emptyList();
         }
 
         return userRepository.findByNameOrEmail(name, email)
                 .stream()
-                .map(user -> new UserInfoResponse(user.getId(), user.getName(), user.getEmail(), user.getRoles()))
+                .map(user -> new UserInfoDetailResponse(user.getId(), user.getName(), user.getEmail(), user.getRoles()))
                 .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public UserInfoResponse getUserDetails(String email) {
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("사용자 정보를 찾을 수 없습니다."));
+
+        return new UserInfoResponse(user.getName(), user.getEmail(), getHighestRole(user.getRoles()));
+    }
+
+    private String getHighestRole(List<String> roles) {
+
+        if (roles.contains("ROLE_ADMIN")) {
+            return "ADMIN";
+        } else if (roles.contains("ROLE_USER")) {
+            return "USER";
+        } else {
+            throw new IllegalStateException("유효한 사용자 역할을 찾을 수 없습니다: " + roles);
+        }
+
     }
 
 

@@ -10,15 +10,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 @Service
-@RequiredArgsConstructor // ✨ final 필드에 대한 생성자를 자동으로 만들어줍니다.
+@RequiredArgsConstructor
 public class CustomUserDetailsService implements UserDetailsService {
 
-    private final UserRepository userRepository; // final 키워드는 필수입니다.
-
-    // --- 아래 생성자 코드가 전부 사라짐 ---
-    // public CustomUserDetailsService(UserRepository userRepository) {
-    //     this.userRepository = userRepository;
-    // }
+    private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {

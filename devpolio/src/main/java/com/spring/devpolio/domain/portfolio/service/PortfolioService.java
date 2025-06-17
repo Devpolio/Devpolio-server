@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -59,6 +60,24 @@ public class PortfolioService {
         // List<Entity>를 List<Dto>로 변환
         return portfolios.stream()
                 .map(PortfolioDto::new)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PortfolioDto> getMyPortfolios() {
+        // 1. SecurityContext에서 현재 인증된 사용자의 이메일을 가져옵니다.
+        String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        // 2. 이메일을 사용하여 사용자 엔티티를 조회합니다.
+        User currentUser = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new IllegalStateException("인증된 사용자 정보를 찾을 수 없습니다."));
+
+        // 3. 해당 사용자의 모든 포트폴리오를 조회합니다.
+        List<Portfolio> portfolios = portfolioRepository.findByUser(currentUser);
+
+        // 4. 조회된 포트폴리오 엔티티 목록을 DTO 목록으로 변환하여 반환합니다.
+        return portfolios.stream()
+                .map(PortfolioDto::new) // 생성자 레퍼런스 사용
                 .collect(Collectors.toList());
     }
 

@@ -1,6 +1,7 @@
 package com.spring.devpolio.domain.portfolio.repository;
 
 import com.spring.devpolio.domain.portfolio.entity.Portfolio;
+import com.spring.devpolio.domain.user.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,4 +31,8 @@ public interface PortfolioRepository extends JpaRepository<Portfolio, Long> {
      * @return 포트폴리오 리스트
      */
     List<Portfolio> findAllByCategoryAndIsPublicOrderByCreatedAtDesc(String category, boolean isPublic);
+
+    List<Portfolio> findByUserId(Long userId);
+
+    List<Portfolio> findByUser(User user);
 }
