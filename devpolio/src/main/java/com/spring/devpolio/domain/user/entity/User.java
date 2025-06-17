@@ -1,6 +1,7 @@
 package com.spring.devpolio.domain.user.entity;
 
 
+import com.spring.devpolio.domain.like.entity.Like;
 import com.spring.devpolio.domain.portfolio.entity.Portfolio;
 import jakarta.persistence.*;
 import lombok.*;
@@ -38,6 +39,9 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     private List<Portfolio> portfolio = new ArrayList<>(); // Null 방지를 위해 초기화
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
 
     // 참고: @Pattern 유효성 검사는 Controller에서 요청을 받는 DTO 클래스(예: SignupRequestDto)로 옮기는 것이
     // 계층 분리 원칙에 더 적합합니다.

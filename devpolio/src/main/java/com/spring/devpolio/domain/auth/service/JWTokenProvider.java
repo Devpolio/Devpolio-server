@@ -2,10 +2,7 @@ package com.spring.devpolio.domain.auth.service;
 
 import com.spring.devpolio.config.JwtProperties;
 import com.spring.devpolio.domain.user.entity.User;
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.JwtParser;
-import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.PostConstruct;
@@ -52,6 +49,7 @@ public class JWTokenProvider {
         Date now = new Date();
         Date exp = new Date(now.getTime() + expiredAt.toMillis());
 
+        // user.getRoles()가 null일 경우에 대비
         List<String> roles = Optional.ofNullable(user.getRoles()).orElse(Collections.emptyList());
 
         return Jwts.builder()
@@ -63,9 +61,9 @@ public class JWTokenProvider {
                 .issuer(jwtProperties.getIssuer())
                 .issuedAt(now)
                 .expiration(exp)
-                .subject(user.getEmail())
-                .add("roles", roles)
-                .add("type", tokenType)
+                .subject(user.getEmail()) // 'sub' 클레임 설정
+                .add("roles", roles)      // 'roles' 클레임 추가
+                .add("type", tokenType)   // 'type' 클레임 추가
                 .and()
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
@@ -80,10 +78,11 @@ public class JWTokenProvider {
         }
     }
 
-    Claims getClaims(String token) {
+    public Claims getClaims(String token) {
         try {
             return parser.parseSignedClaims(token).getPayload();
         } catch (JwtException | IllegalArgumentException e) {
+            // 토큰 파싱 실패 시 null을 반환하여 이후 로직에서 처리하도록 함
             return null;
         }
     }
@@ -92,6 +91,7 @@ public class JWTokenProvider {
         Claims claims = getClaims(token);
 
         if (claims == null) {
+            // 유효하지 않은 토큰이면 인증 객체를 생성하지 않음
             return null;
         }
 
@@ -104,8 +104,12 @@ public class JWTokenProvider {
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
 
+        // 이전 오류를 해결했던 방식인 claims.get("sub", String.class)를 사용
+        String username = claims.get("sub", String.class);
+
         UserDetails userDetails = org.springframework.security.core.userdetails.User
-                .withUsername(claims.getSubject())
+                .withUsername(username)
+                .password("") // 토큰 기반 인증에서는 비밀번호가 필요 없음
                 .authorities(authorities)
                 .build();
 

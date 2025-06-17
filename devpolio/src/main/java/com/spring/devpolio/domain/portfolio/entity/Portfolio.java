@@ -1,5 +1,6 @@
 package com.spring.devpolio.domain.portfolio.entity;
 
+import com.spring.devpolio.domain.like.entity.Like;
 import com.spring.devpolio.domain.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -32,7 +33,6 @@ public class Portfolio {
 
     private Boolean isPublic;
 
-    private int likes;
 
     @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PortfolioFile> files = new ArrayList<>();
@@ -40,7 +40,14 @@ public class Portfolio {
     @ManyToOne
     private User user;
 
+    @OneToMany(mappedBy = "portfolio", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Like> likes = new ArrayList<>();
+
     @Transient
     private List<MultipartFile> portfolioFiles; // 파일 업로드 용도
+
+    public int getLikeCount() {
+        return this.likes.size();
+    }
 }
 

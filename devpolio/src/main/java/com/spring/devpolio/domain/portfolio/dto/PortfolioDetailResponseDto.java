@@ -15,7 +15,6 @@ public class PortfolioDetailResponseDto {
     private final String category;
     private final boolean isPublic;
     private final LocalDateTime createdAt;
-    private final int likes;
     private final List<PortfolioFileDto> files;
 
     public PortfolioDetailResponseDto(Portfolio portfolio) {
@@ -25,7 +24,7 @@ public class PortfolioDetailResponseDto {
         this.category = portfolio.getCategory();
         this.isPublic = portfolio.getIsPublic();
         this.createdAt = portfolio.getCreatedAt();
-        this.likes = portfolio.getLikes();
+
         this.files = portfolio.getFiles().stream()
                 .map(PortfolioFileDto::new)
                 .collect(Collectors.toList());
