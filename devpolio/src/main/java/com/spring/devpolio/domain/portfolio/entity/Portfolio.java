@@ -49,5 +49,20 @@ public class Portfolio {
     public int getLikeCount() {
         return this.likes.size();
     }
+
+    public void update(String title, String author, String category, Boolean isPublic) {
+        if (title != null) {
+            this.title = title;
+        }
+        if (author != null) {
+            this.author = author;
+        }
+        if (category != null) {
+            this.category = category;
+        }
+        if (isPublic != null) {
+            this.isPublic = isPublic;
+        }
+    }
 }
 

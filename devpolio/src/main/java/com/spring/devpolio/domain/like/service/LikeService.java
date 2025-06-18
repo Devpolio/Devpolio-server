@@ -11,6 +11,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class LikeService {
@@ -20,28 +22,31 @@ public class LikeService {
     private final PortfolioRepository portfolioRepository;
 
     @Transactional
-    public void addLike(Long portfolioId) {
+    public String addLike(Long portfolioId) {
         User user = getCurrentUser();
         Portfolio portfolio = findPortfolioById(portfolioId);
 
-        // 이미 '좋아요'를 눌렀는지 확인
         if (likeRepository.findByUserAndPortfolio(user, portfolio).isPresent()) {
-            throw new IllegalStateException("이미 '좋아요'를 누른 포트폴리오입니다.");
+            return "ALREADY_LIKED";
         }
 
         likeRepository.save(new Like(user, portfolio));
+        return "SUCCESS";
     }
 
     @Transactional
-    public void removeLike(Long portfolioId) {
+    public String removeLike(Long portfolioId) {
         User user = getCurrentUser();
         Portfolio portfolio = findPortfolioById(portfolioId);
 
-        // '좋아요' 기록을 찾아서 삭제
-        Like like = likeRepository.findByUserAndPortfolio(user, portfolio)
-                .orElseThrow(() -> new IllegalStateException("'좋아요'를 누른 기록이 없습니다."));
+        Optional<Like> like = likeRepository.findByUserAndPortfolio(user, portfolio);
 
-        likeRepository.delete(like);
+        if (like.isEmpty()) {
+            return "NOT_LIKED";
+        }
+
+        likeRepository.delete(like.get());
+        return "SUCCESS";
     }
 
     private User getCurrentUser() {

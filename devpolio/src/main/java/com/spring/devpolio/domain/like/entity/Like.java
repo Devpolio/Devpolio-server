@@ -21,9 +21,9 @@ public class Like {
     @JoinColumn(name = "user_id", nullable = false)
     private User user; // '좋아요'를 누른 사용자
 
-    @ManyToOne(fetch = FetchType.LAZY) // 지연 로딩으로 성능 최적화
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "portfolio_id", nullable = false)
-    private Portfolio portfolio; // '좋아요'의 대상이 된 포트폴리오
+    private Portfolio portfolio;
 
     // 생성자
     public Like(User user, Portfolio portfolio) {

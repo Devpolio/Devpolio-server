@@ -39,7 +39,7 @@ public class TokenService {
         String accessToken = jwtTokenProvider.createAccessToken(user);
         String refreshToken = jwtTokenProvider.createRefreshToken(user);
 
-        // 기존 RefreshToken이 존재하는지 확인
+
         RefreshToken existingToken = refreshTokenRepository.findById(user.getId())
                 .orElse(null);
 

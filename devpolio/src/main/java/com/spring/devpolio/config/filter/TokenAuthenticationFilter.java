@@ -27,7 +27,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) throws ServletException {
-        // 프리플라이트 요청(OPTIONS)은 항상 필터를 거치지 않도록 설정
+        // Vue에서 보내는 Options은 필터 안거치고 통과
         if ("OPTIONS".equals(request.getMethod())) {
             return true;
         }
@@ -47,7 +47,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
 
         if (token != null && tokenProvider.isValidToken(token)) {
             Authentication authentication = tokenProvider.getAuthentication(token);
-            // ✅ [개선] getAuthentication이 null을 반환할 수 있으므로 null 체크 추가
+
             if (authentication != null) {
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }

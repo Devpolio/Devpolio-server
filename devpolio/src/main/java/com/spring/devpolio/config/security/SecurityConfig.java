@@ -46,8 +46,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/auth/signup", "/auth/signin", "/auth/refresh", "/auth/vaild").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/portfolio/**").permitAll()
+                        .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/portfolio/**").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/swagger-ui/**").permitAll()
                         .requestMatchers("/error").permitAll()
@@ -76,23 +76,19 @@ public class SecurityConfig {
         return source;
     }
 
-
-
     private AuthenticationEntryPoint jwtException() {
         AuthenticationEntryPoint ap = (request, response, authException) -> {
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             TokenExceptionResponse res = new TokenExceptionResponse();
             String message = (String) request.getAttribute("TokenException");
-            if (message != null) { // UnAuthenticated
+            if (message != null) {
                 response.setStatus(401);
                 res.setResult(message);
             } else {
                 response.setStatus(403);
                 res.setResult(authException.getMessage());
             }
-//            Gson gson = new Gson();
-//            response.getWriter().write(gson.toJson(res));
             ObjectMapper mapper = new ObjectMapper();
             response.getWriter().write(mapper.writeValueAsString(res));
         };
@@ -102,9 +98,7 @@ public class SecurityConfig {
     @Bean
     public HttpFirewall httpFirewall() {
         StrictHttpFirewall firewall = new StrictHttpFirewall();
-        // URL 정규화를 통해 잠재적인 문제를 방지합니다.
-        // 예를 들어, 더블 슬래시(//)나 백스페이스 같은 문자를 처리합니다.
-        firewall.setAllowSemicolon(true); // 세미콜론은 허용
+        firewall.setAllowSemicolon(true); // 세미콜론 사용 가능하게 변경
         return firewall;
     }
 

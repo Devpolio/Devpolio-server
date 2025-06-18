@@ -17,9 +17,9 @@ public class SwaggerConfig {
                         openApi ->
                                 openApi.setInfo(
                                                 new Info()
-                                                        .title("auth api") // API 제목
-                                                        .description("로그인 회원가입을 처리하기 위한 API") // API 설명
-                                                        .version("1.0.0") // API 버전
+                                                        .title("auth api")
+                                                        .description("로그인 회원가입을 처리하기 위한 API")
+                                                        .version("1.0.0")
                                         )
                 )
                 .build();
@@ -90,5 +90,35 @@ public class SwaggerConfig {
                 .build();
     }
 
+    @Bean
+    public GroupedOpenApi LikeApi() {
+        return GroupedOpenApi.builder()
+                .group("like")
+                .pathsToMatch("/portfolio/{id}/like")
+                .addOpenApiCustomizer(
+                        openApi ->
+                                openApi.setInfo(
+                                        new Info()
+                                        .title("like api")
+                                                .description("좋아요 추가 삭제 api")
+                                                .version("1.0.0")
+                                )
+                ).build();
+    }
 
+    @Bean
+    public GroupedOpenApi allApi() {
+        return GroupedOpenApi.builder()
+                .group("all")
+                .pathsToMatch("/**")
+                .addOpenApiCustomizer(
+                        openApi ->
+                                openApi.setInfo(
+                                        new Info()
+                                                .title("all api")
+                                                .description("모든 api")
+                                                .version("1.0.0")
+                                )
+                ).build();
+    }
 }

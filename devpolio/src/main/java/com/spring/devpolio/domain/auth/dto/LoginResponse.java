@@ -13,5 +13,4 @@ public class LoginResponse {
         this.refreshToken = refreshToken;
     }
 
-    // getter 생략 or Lombok @Getter 사용
 }

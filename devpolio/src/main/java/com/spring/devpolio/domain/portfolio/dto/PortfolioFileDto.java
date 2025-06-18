@@ -14,16 +14,17 @@ public class PortfolioFileDto {
     private final String originalFileName;
     private final String viewUrl;
     private final String downloadUrl;
+    private final String storedFileName;
 
     public PortfolioFileDto(PortfolioFile portfolioFile) {
         this.id = portfolioFile.getId();
         this.originalFileName = portfolioFile.getOriginalFileName();
 
         String uniqueFileName = Paths.get(portfolioFile.getFileUrl()).getFileName().toString();
+
         String encodedFileName = UriUtils.encode(uniqueFileName, StandardCharsets.UTF_8);
 
-        // ❗❗❗ 핵심 수정 사항 ❗❗❗
-        // URL 생성 로직에서 "/api"를 제거합니다.
+        this.storedFileName = uniqueFileName;
         this.viewUrl = "/files/view?filename=" + encodedFileName;
         this.downloadUrl = "/files/download?filename=" + encodedFileName;
     }

@@ -2,7 +2,7 @@ package com.spring.devpolio.domain.auth.dto;
 
 import com.spring.devpolio.domain.user.entity.User;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor; // Lombok 어노테이션 추가
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

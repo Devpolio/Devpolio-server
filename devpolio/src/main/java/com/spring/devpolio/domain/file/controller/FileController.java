@@ -1,11 +1,14 @@
 package com.spring.devpolio.domain.file.controller; // 패키지 경로는 프로젝트에 맞게 조정하세요.
 
+import com.spring.devpolio.domain.file.dto.FileDownloadDto;
+import com.spring.devpolio.domain.file.service.FileService;
 import com.spring.devpolio.domain.portfolio.service.PortfolioService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +17,7 @@ import org.springframework.web.util.UriUtils;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -22,11 +26,12 @@ import java.security.Principal;
 
 @Slf4j
 @RestController
-@RequestMapping("/files") // "/api" 제거
+@RequestMapping("/files")
 @RequiredArgsConstructor
 public class FileController {
 
 
+    private final FileService fileService;
     private final PortfolioService portfolioService;
 
     // application.properties 등에서 파일 저장 경로를 설정할 수 있습니다.
@@ -34,56 +39,56 @@ public class FileController {
     private String uploadDirectory;
 
 
-    /**
-     * 이미지 미리보기(스트리밍)를 위한 API
-     * @param filename 쿼리 파라미터로 전달된 서버 저장 파일명 (e.g., UUID_original_name.jpg)
-     * @return 이미지 리소스
-     */
     @GetMapping("/view")
-    public ResponseEntity<Resource> viewFile(@RequestParam String filename) throws MalformedURLException {
-        Path filePath = Paths.get(uploadDirectory).resolve(filename);
-        Resource resource = new UrlResource(filePath.toUri());
+    public ResponseEntity<Resource> viewFile(@RequestParam("filename") String filename) throws IOException {
+        FileDownloadDto downloadDto = fileService.prepareDownload(filename);
+        Resource resource = downloadDto.getResource();
 
-        if (resource.exists() && resource.isReadable()) {
-            try {
-                String mimeType = Files.probeContentType(filePath);
-                if (mimeType == null) {
-                    mimeType = "application/octet-stream";
-                }
-                return ResponseEntity.ok()
-                        .contentType(MediaType.parseMediaType(mimeType))
-                        .body(resource);
-            } catch (IOException e) {
-                log.error("Could not determine file type for file: {}", filename, e);
-                return ResponseEntity.internalServerError().build();
-            }
-        } else {
-            log.warn("File not found or not readable: {}", filename);
-            return ResponseEntity.notFound().build();
+        String originalFileName = downloadDto.getOriginalFileName();
+
+        String contentType = Files.probeContentType(resource.getFile().toPath());
+        if (contentType == null) {
+            contentType = "application/octet-stream";
         }
+
+        // 한글 파일명 깨지지 않게 조치
+        ContentDisposition contentDisposition = ContentDisposition.builder("inline")
+                .filename(originalFileName, StandardCharsets.UTF_8)
+                .build();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(contentType));
+        headers.setContentDisposition(contentDisposition);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(resource);
     }
 
-    /**
-     * 파일 다운로드를 위한 API
-     * @param filename 쿼리 파라미터로 전달된 서버 저장 파일명
-     * @return 다운로드할 파일
-     */
+
     @GetMapping("/download")
-    public ResponseEntity<Resource> downloadFile(@RequestParam String filename) throws MalformedURLException {
-        Path filePath = Paths.get(uploadDirectory).resolve(filename);
-        Resource resource = new UrlResource(filePath.toUri());
+    public ResponseEntity<Resource> downloadFile(@RequestParam("filename") String filename) throws IOException {
+        FileDownloadDto downloadDto = fileService.prepareDownload(filename);
+        Resource resource = downloadDto.getResource();
+        String originalFileName = downloadDto.getOriginalFileName();
 
-        if (resource.exists() && resource.isReadable()) {
-            // 원본 파일명을 헤더에 담기 위해 파일명에서 UUID 부분을 제거 (선택적)
-            String originalFilename = filename.substring(filename.indexOf("_") + 1);
-            String encodedOriginalFilename = UriUtils.encode(originalFilename, StandardCharsets.UTF_8);
-
-            return ResponseEntity.ok()
-                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedOriginalFilename + "\"")
-                    .body(resource);
-        } else {
-            return ResponseEntity.notFound().build();
+        String contentType = Files.probeContentType(resource.getFile().toPath());
+        if (contentType == null) {
+            contentType = "application/octet-stream";
         }
+
+        // 한글 파일명 깨지지 않게 조치
+        ContentDisposition contentDisposition = ContentDisposition.builder("attachment")
+                .filename(originalFileName, StandardCharsets.UTF_8)
+                .build();
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(contentType));
+        headers.setContentDisposition(contentDisposition);
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(resource);
     }
 
     @DeleteMapping("/{fileId}")

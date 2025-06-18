@@ -38,7 +38,6 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
         errorDetails.put("message", "로그인이 필요한 서비스입니다.");
         errorDetails.put("path", request.getRequestURI());
 
-        // JSON 형태로 응답 본문 작성
         objectMapper.writeValue(response.getWriter(), errorDetails);
     }
 }

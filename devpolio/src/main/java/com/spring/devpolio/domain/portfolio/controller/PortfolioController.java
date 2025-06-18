@@ -1,10 +1,7 @@
 package com.spring.devpolio.domain.portfolio.controller;
 
 
-import com.spring.devpolio.domain.portfolio.dto.PortfolioDetailResponseDto;
-import com.spring.devpolio.domain.portfolio.dto.PortfolioDto;
-import com.spring.devpolio.domain.portfolio.dto.addPortfolioDto;
-import com.spring.devpolio.domain.portfolio.dto.addPortfolioResponseDto;
+import com.spring.devpolio.domain.portfolio.dto.*;
 import com.spring.devpolio.domain.portfolio.service.PortfolioService;
 import io.swagger.v3.oas.annotations.Parameter;
 import org.hibernate.query.Page;
@@ -66,6 +63,15 @@ public class PortfolioController {
     public ResponseEntity<List<PortfolioDto>> getMyPortfolios() {
         List<PortfolioDto> myPortfolios = portfolioService.getMyPortfolios();
         return ResponseEntity.ok(myPortfolios);
+    }
+
+    @PatchMapping("/portfolio/{id}")
+    public ResponseEntity<Void> updatePortfolio(
+            @PathVariable Long id,
+            @RequestBody PortfolioUpdateRequest updateDto) {
+
+        portfolioService.updatePortfolio(id, updateDto);
+        return ResponseEntity.ok().build();
     }
 
 

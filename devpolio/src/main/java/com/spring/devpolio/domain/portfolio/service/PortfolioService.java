@@ -1,10 +1,8 @@
 package com.spring.devpolio.domain.portfolio.service;
 
 
-import com.spring.devpolio.domain.portfolio.dto.PortfolioDetailResponseDto;
-import com.spring.devpolio.domain.portfolio.dto.PortfolioDto;
-import com.spring.devpolio.domain.portfolio.dto.addPortfolioDto;
-import com.spring.devpolio.domain.portfolio.dto.addPortfolioResponseDto;
+import com.spring.devpolio.domain.like.repository.LikeRepository;
+import com.spring.devpolio.domain.portfolio.dto.*;
 import com.spring.devpolio.domain.portfolio.entity.Portfolio;
 import com.spring.devpolio.domain.portfolio.entity.PortfolioFile;
 import com.spring.devpolio.domain.portfolio.repository.PortfolioFileRepository;
@@ -29,9 +27,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.Principal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.hibernate.query.sqm.tree.SqmNode.log;
@@ -43,23 +39,36 @@ public class PortfolioService {
     private final PortfolioRepository portfolioRepository;
     private final UserRepository userRepository;
     private final PortfolioFileRepository portfolioFileRepository;
+    private final LikeRepository likeRepository;
 
     @Value("${file.upload-dir}")
     private String uploadDirectory;
 
+    @Transactional(readOnly = true)
     public List<PortfolioDto> getAllPortfolios(String category) {
-        List<Portfolio> portfolios;
 
-        // 카테고리 파라미터가 있으면 카테고리별로, 없으면 전체 공개 포트폴리오를 조회
-        if (category != null && !category.trim().isEmpty()) {
-            portfolios = portfolioRepository.findAllByCategoryAndIsPublicOrderByCreatedAtDesc(category, true);
-        } else {
-            portfolios = portfolioRepository.findAllByIsPublicOrderByCreatedAtDesc(true);
+        User currentUser = getCurrentUser();
+
+        // 단순 쿼리로 전체 불러오기
+        List<Portfolio> portfolios = (category != null && !category.trim().isEmpty())
+                ? portfolioRepository.findAllByCategoryAndIsPublicOrderByCreatedAtDesc(category, true)
+                : portfolioRepository.findAllByIsPublicOrderByCreatedAtDesc(true);
+
+        if (portfolios.isEmpty()) {
+            return Collections.emptyList();
         }
 
-        // List<Entity>를 List<Dto>로 변환
+        //    (성능 최적화를 위해 '좋아요' 누른 포트폴리오의 ID만 Set으로 저장)
+        Set<Long> likedPortfolioIds = likeRepository.findByUserAndPortfolioIn(currentUser, portfolios)
+                .stream()
+                .map(like -> like.getPortfolio().getId())
+                .collect(Collectors.toSet());
+
         return portfolios.stream()
-                .map(PortfolioDto::new)
+                .map(portfolio -> new PortfolioDto(
+                        portfolio,
+                        likedPortfolioIds.contains(portfolio.getId())
+                ))
                 .collect(Collectors.toList());
     }
 
@@ -68,15 +77,25 @@ public class PortfolioService {
 
         String userEmail = SecurityContextHolder.getContext().getAuthentication().getName();
 
-
         User currentUser = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new IllegalStateException("인증된 사용자 정보를 찾을 수 없습니다."));
 
-
-        List<Portfolio> portfolios = portfolioRepository.findByUser(currentUser);
+        List<Portfolio> portfolios = portfolioRepository.findByUserFetchLikes(currentUser);
 
         return portfolios.stream()
-                .map(PortfolioDto::new)
+                .map(portfolio -> {
+                    System.out.println("포트폴리오 ID " + portfolio.getId() + " 처리 중..."); // 디버깅용 로그
+
+                    boolean isLikedByCurrentUser = portfolio.getLikes().stream()
+                            .anyMatch(like -> {
+                                // 비교하는 ID를 직접 출력하여 확인합니다.
+                                System.out.println("  -> 좋아요 누른 사용자 ID: " + like.getUser().getId());
+                                return like.getUser().getId().equals(currentUser.getId());
+                            });
+
+                    System.out.println("  -> isLiked 계산 결과: " + isLikedByCurrentUser); // 디버깅용 로그
+                    return new PortfolioDto(portfolio, isLikedByCurrentUser);
+                })
                 .collect(Collectors.toList());
     }
 
@@ -90,7 +109,9 @@ public class PortfolioService {
                 throw new RuntimeException("접근 권한이 없습니다. 로그인이 필요합니다.");
             }
             String requestUserEmail = principal.getName();
+
             String ownerEmail = portfolio.getUser().getEmail();
+
             if (!requestUserEmail.equals(ownerEmail)) {
                 throw new RuntimeException("비공개 포트폴리오에 대한 접근 권한이 없습니다.");
             }
@@ -98,11 +119,11 @@ public class PortfolioService {
         System.out.println("포트폴리오 찾기 성공");
         return new PortfolioDetailResponseDto(portfolio);
     }
-
+    @Transactional // 데이터 변경 트랜젝션
     public addPortfolioResponseDto addPortfolio(addPortfolioDto dto, List<MultipartFile> files, Principal principal) {
-        String email = principal.getName(); // 기본적으로 username(email)을 반환
+        String email = principal.getName();
         User user = userRepository.findByEmail(email)
-                    .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found: " + email));
 
         Portfolio portfolio = new Portfolio();
         portfolio.setTitle(dto.getTitle());
@@ -112,30 +133,56 @@ public class PortfolioService {
         portfolio.setIsPublic(dto.getIsPublic());
         portfolio.setCreatedAt(LocalDateTime.now());
         portfolio.setUser(user);
-        List<PortfolioFile> portfolioFiles = new ArrayList<>();
 
+        List<PortfolioFile> portfolioFiles = new ArrayList<>();
         for (MultipartFile file : files) {
-            if (!file.isEmpty()) {
-                String uniqueName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+            if (file != null && !file.isEmpty()) {
+
+                String originalFilename = file.getOriginalFilename();
+                String uniqueName = UUID.randomUUID().toString() + "_" + originalFilename;
                 Path path = Paths.get(uploadDirectory, uniqueName);
+
                 try {
                     Files.createDirectories(path.getParent());
                     Files.write(path, file.getBytes());
                 } catch (IOException e) {
-                    throw new RuntimeException("File save failed", e);
+                    throw new RuntimeException("파일 저장에 실패했습니다.", e);
                 }
 
-                PortfolioFile pf = new PortfolioFile();
-                pf.setFileUrl(path.toString());
-                pf.setOriginalFileName(file.getOriginalFilename());
-                pf.setPortfolio(portfolio);
+                PortfolioFile pf = PortfolioFile.builder()
+                        .originalFileName(originalFilename)
+                        .storedFileName(uniqueName)
+                        .fileUrl(path.toString())
+                        .portfolio(portfolio)
+                        .build();
 
                 portfolioFiles.add(pf);
             }
         }
+
         portfolio.setFiles(portfolioFiles);
-        portfolioRepository.save(portfolio); // cascade 덕분에 파일들도 같이 저장됨
+
+        portfolioRepository.save(portfolio);
+
         return new addPortfolioResponseDto(portfolio.getId(), "포트폴리오 저장 완료");
+    }
+
+    @Transactional
+    public void updatePortfolio(Long portfolioId, PortfolioUpdateRequest updateDto) {
+
+        User currentUser = getCurrentUser();
+
+        Portfolio portfolio = portfolioRepository.findById(portfolioId)
+                .orElseThrow(() -> new IllegalArgumentException("해당 포트폴리오를 찾을 수 없습니다. id=" + portfolioId));
+
+
+        if (!portfolio.getUser().getId().equals(currentUser.getId())) {
+            throw new org.springframework.security.access
+                    .AccessDeniedException("해당 포트폴리오를 수정할 권한이 없습니다. id=" + portfolioId + " user=" + currentUser.getId());
+        }
+
+        portfolio.update(updateDto.getTitle(),updateDto.getAuthor(), updateDto.getCategory(), updateDto.getIsPublic());
+
     }
 
     public void deletePortfolioFile(Long fileId, Principal principal) {
@@ -149,7 +196,7 @@ public class PortfolioService {
         String requestUserEmail = principal.getName();
         String ownerEmail = fileToDelete.getPortfolio().getUser().getEmail();
 
-        // 관리자가 아니고, 소유자도 아닐 경우에만 접근을 거부합니다.
+        // 관리자, 작성자 둘다 아닐경우 실행
         if (!isAdmin && !requestUserEmail.equals(ownerEmail)) {
             throw new org.springframework.security.access.AccessDeniedException("파일을 삭제할 권한이 없습니다.");
         }
@@ -165,39 +212,37 @@ public class PortfolioService {
         portfolioFileRepository.delete(fileToDelete);
     }
 
+    @Transactional
     public void deletePortfolio(Long portfolioId, Principal principal) {
-        // 1. 포트폴리오 정보를 DB에서 조회 (파일 정보까지 함께 fetch)
+
         Portfolio portfolioToDelete = portfolioRepository.findByIdWithUserAndFiles(portfolioId)
                 .orElseThrow(() -> new RuntimeException("해당 포트폴리오를 찾을 수 없습니다. ID: " + portfolioId));
 
-        // 2. 권한 확인 (관리자 또는 소유자)
-        Authentication authentication = (Authentication) principal;
-        boolean isAdmin = authentication.getAuthorities().stream()
-                .anyMatch(authority -> authority.getAuthority().equals("ROLE_ADMIN"));
+        User currentUser = userRepository.findByEmail(principal.getName())
+                .orElseThrow(() -> new IllegalStateException("인증된 사용자 정보를 찾을 수 없습니다."));
 
-        String requestUserEmail = principal.getName();
-        String ownerEmail = portfolioToDelete.getUser().getEmail();
-
-        if (!isAdmin && !requestUserEmail.equals(ownerEmail)) {
-            throw new org.springframework.security.access.AccessDeniedException("파일을 삭제할 권한이 없습니다.");
+        boolean isAdmin = currentUser.getRoles().contains("ROLE_ADMIN");
+        if (!isAdmin && !portfolioToDelete.getUser().getId().equals(currentUser.getId())) {
+            throw new org.springframework.security.access.AccessDeniedException("포트폴리오를 삭제할 권한이 없습니다.");
         }
 
-        // 3. 서버에 저장된 실제 파일들 삭제
         for (PortfolioFile file : portfolioToDelete.getFiles()) {
             try {
                 Path filePath = Paths.get(file.getFileUrl());
                 Files.deleteIfExists(filePath);
             } catch (IOException e) {
-                // 하나의 파일 삭제에 실패하더라도 일단 로그만 남기고 계속 진행할 수 있습니다.
-                // 또는 전체 작업을 중단하고 싶다면 여기서 RuntimeException을 던집니다.
-                log.error("포트폴리오 전체 삭제 중 파일 삭제 실패. Path: {}", file.getFileUrl(), e);
+
+                log.error("포트폴리오 삭제 중 파일 시스템에서 파일 삭제 실패. Path: {}", file.getFileUrl(), e);
             }
         }
 
-        // 4. 포트폴리오 DB 레코드 삭제
-        // Portfolio 엔티티에 cascade 설정이 되어 있으므로,
-        // 포트폴리오가 삭제되면 연관된 PortfolioFile 레코드들도 함께 삭제됩니다.
         portfolioRepository.delete(portfolioToDelete);
+
+    }
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalStateException("인증된 사용자 정보를 DB에서 찾을 수 없습니다. (이메일: " + email + ")"));
     }
 
 }
